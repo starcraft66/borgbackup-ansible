@@ -1,20 +1,10 @@
-- name: install borg backup via apt
-  apt:
+- name: install borg backup
+  package:
     name: "{{ item }}"
     state: latest
   with_items:
     - borgbackup
     - python-pip
-  when: ansible_os_family == "Debian"
-
-- name: install borg backup via yum
-  yum:
-    name: "{{ item }}"
-    state: latest
-  with_items:
-    - borgbackup
-    - python-pip
-  when: ansible_os_family == "RedHat"
 
 - name: install pexpect
   pip:
