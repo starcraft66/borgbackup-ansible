@@ -1,0 +1,11 @@
+[repo_server]
+backup.domain.tld
+
+[backup_client]
+client1.domain.tld	repo_encryption_key=very_secret!!!
+client2.domain.tld	repo_encryption_key=very_secret!!!
+client3.domain.tld	repo_encryption_key=very_secret!!!
+
+[all:children]
+repo_server
+backup_client

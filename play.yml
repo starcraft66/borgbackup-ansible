@@ -1,0 +1,6 @@
+---
+- name: Deploy backup script and initialiaze backup repo
+  hosts: all
+  become: true
+  roles:
+    - borg

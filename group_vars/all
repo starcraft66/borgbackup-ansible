@@ -1,0 +1,6 @@
+repo:
+  repo_path: /var/backup
+  backup_user: backup
+  backup_group: backup
+client:
+  ssh_key_location: /usr/local/etc

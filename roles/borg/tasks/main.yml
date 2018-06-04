@@ -1,0 +1,109 @@
+- name: install borg backup via apt
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - borgbackup
+    - python-pip
+  when: ansible_os_family == "Debian"
+
+- name: install borg backup via yum
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - borgbackup
+    - python-pip
+  when: ansible_os_family == "RedHat"
+
+- name: install pexpect
+  pip:
+    name: pexpect
+
+- name: Generate ssh keypair
+  expect:
+    command: "ssh-keygen -t rsa -b 4096"
+    # only creates the key if the file does not exist
+    creates: "{{ client.ssh_key_location }}/backup_key"
+    responses:
+      "file": "{{ client.ssh_key_location }}/backup_key"
+      "passphrase": ""
+  when: inventory_hostname in groups['backup_client']
+
+- name: Ensure proper permissions
+  file:
+    name: "{{ item }}"
+    state: file
+    owner: root
+    group: root
+  with_items:
+    - "{{ client.ssh_key_location }}/backup_key"
+    - "{{ client.ssh_key_location }}/backup_key.pub"
+  when: inventory_hostname in groups['backup_client']
+
+- name: read public key
+  command: "cat {{ client.ssh_key_location }}/backup_key.pub"
+  register: backup_pub_key
+  when: inventory_hostname in groups['backup_client']
+
+- name: Copy backup script
+  template:
+    src: backup_helper.j2
+    dest: /usr/local/bin/backup_helper
+    owner: root
+    group: root
+    mode: 0700
+  when: inventory_hostname in groups['backup_client']
+
+- name: Add cron entry
+  cron:
+    cron_file: backup
+    user: root
+    state: present
+    name: System Backup
+    job: /usr/local/bin/backup_helper
+    month: "*"
+    weekday: "*"
+    day: "*"
+    hour: 0
+    minute: 0
+  when: inventory_hostname in groups['backup_client']
+
+- name: create backup user
+  user:
+    name: "{{ repo.backup_user }}"
+    group: "{{ repo.backup_group }}"
+    create_home: yes
+  when: inventory_hostname in groups['repo_server']
+
+- name: add deploy key to authorized keys
+  authorized_key:
+    user: "{{ repo.backup_user }}"
+    key: "{{ hostvars[item].backup_pub_key.stdout }}"
+    key_options: 'command="cd /var/backup/{{ hostvars[item].ansible_hostname }}; borg serve --restrict-to-path /var/backup/{{ hostvars[item].ansible_hostname }}",restrict'
+  with_inventory_hostnames:
+    - backup_client
+  when: inventory_hostname in groups['repo_server']
+
+- name: initialize borg repo
+  expect:
+    command: "borg init --encryption=repokey {{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}"
+    responses:
+      "passphrase": "{{ hostvars[item].repo_encryption_key }}"
+      "displayed": "N"
+  with_inventory_hostnames:
+    - backup_client
+  when: inventory_hostname in groups['repo_server']
+  ignore_errors: yes
+
+- name: set repo permissions
+  file:
+    path: "{{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}"
+    state: directory
+    recurse: yes
+    mode: 0700
+    owner: "{{ repo.backup_user }}"
+    group: "{{ repo.backup_group }}"
+  with_inventory_hostnames:
+    - backup_client
+  when: inventory_hostname in groups['repo_server']
