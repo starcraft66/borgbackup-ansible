@@ -46,6 +46,18 @@
   register: backup_pub_key
   when: inventory_hostname in groups['backup_client']
 
+- name: read repo server ecdsa ssh host key
+  command: "ssh-keyscan -Ht ecdsa {{ hostvars[groups['repo_server'][0]].inventory_hostname }}"
+  register: repo_host_key
+  when: inventory_hostname in groups['repo_server']
+  ignore_errors: true
+
+- name: add the repo server's ssh-rsa key to the client
+  lineinfile:
+    path: /root/.ssh/known_hosts
+    create: yes
+    line: "{{ hostvars[groups['repo_server'][0]].repo_host_key.stdout }}"
+
 - name: Copy backup script
   template:
     src: backup_helper.j2
