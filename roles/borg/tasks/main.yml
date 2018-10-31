@@ -1,19 +1,17 @@
 - name: install borg backup via apt
   apt:
-    name: "{{ item }}"
+    name:
+      - borgbackup
+      - python-pip
     state: latest
-  with_items:
-    - borgbackup
-    - python-pip
   when: ansible_os_family == "Debian"
 
 - name: install borg backup via yum
   yum:
-    name: "{{ item }}"
+    name:
+      - borgbackup
+      - python-pip
     state: latest
-  with_items:
-    - borgbackup
-    - python-pip
   when: ansible_os_family == "RedHat"
 
 - name: install pexpect
@@ -36,7 +34,7 @@
     state: file
     owner: root
     group: root
-  with_items:
+  loop:
     - "{{ client.ssh_key_location }}/backup_key"
     - "{{ client.ssh_key_location }}/backup_key.pub"
   when: inventory_hostname in groups['backup_client']
