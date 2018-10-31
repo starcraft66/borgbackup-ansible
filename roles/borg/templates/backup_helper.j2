@@ -1,7 +1,11 @@
 #!/bin/sh
 
 # Setting this, so the repo does not need to be given on the commandline:
+{% if hostvars[groups['repo_server'][0]].ansible_port != 22 %}
+export BORG_REPO=ssh://{{ repo.backup_user }}@{{ hostvars[groups['repo_server'][0]].inventory_hostname }}:{{hostvars[groups['repo_server'][0]].ansible_port}}{{ repo.repo_path }}/{{ ansible_hostname }}
+{% else %}
 export BORG_REPO=ssh://{{ repo.backup_user }}@{{ hostvars[groups['repo_server'][0]].inventory_hostname }}{{ repo.repo_path }}/{{ ansible_hostname }}
+{% endif %}
 
 # Setting this, so you won't be asked for your repository passphrase:
 export BORG_PASSPHRASE='{{ hostvars[inventory_hostname].repo_encryption_key }}'

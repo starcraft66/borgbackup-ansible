@@ -47,7 +47,7 @@
   when: inventory_hostname in groups['backup_client']
 
 - name: read repo server ecdsa ssh host key
-  command: "ssh-keyscan -Ht ecdsa {{ hostvars[groups['repo_server'][0]].inventory_hostname }}"
+  command: "ssh-keyscan -Ht ecdsa -p {{ hostvars[groups['repo_server'][0]].ansible_port }} {{ hostvars[groups['repo_server'][0]].inventory_hostname }}"
   register: repo_host_key
   when: inventory_hostname in groups['repo_server']
   ignore_errors: true
