@@ -86,7 +86,7 @@
     create_home: yes
   when: inventory_hostname in groups['repo_server']
 
-- name: add deploy key to authorized keys
+- name: add backup key to authorized keys
   authorized_key:
     user: "{{ repo.backup_user }}"
     key: "{{ hostvars[item].backup_pub_key.stdout }}"
