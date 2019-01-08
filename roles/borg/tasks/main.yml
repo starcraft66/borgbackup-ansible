@@ -95,6 +95,18 @@
     - backup_client
   when: inventory_hostname in groups['repo_server']
 
+- name: Check whether the backup repo for this host exists
+  lineinfile:
+    name: "{{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}/README"
+    line: "This is a Borg Backup repository."
+    state: present
+  check_mode: yes
+  ignore_errors: yes
+  register: repo_exists
+  with_inventory_hostnames:
+    - backup_client
+  when: inventory_hostname in groups['repo_server']
+
 - name: initialize borg repo
   expect:
     command: "borg init --encryption=repokey {{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}"
@@ -103,8 +115,7 @@
       "displayed": "N"
   with_inventory_hostnames:
     - backup_client
-  when: inventory_hostname in groups['repo_server']
-  ignore_errors: yes
+  when: (inventory_hostname in groups['repo_server']) and (repo_exists['results'][0].failed)
 
 - name: set repo permissions
   file:
