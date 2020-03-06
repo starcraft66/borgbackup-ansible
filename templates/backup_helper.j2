@@ -2,15 +2,15 @@
 
 # Setting this, so the repo does not need to be given on the commandline:
 {% if hostvars[groups['repo_server'][0]].ansible_port != 22 %}
-export BORG_REPO=ssh://{{ repo.backup_user }}@{{ hostvars[groups['repo_server'][0]].inventory_hostname }}:{{hostvars[groups['repo_server'][0]].ansible_port}}{{ repo.repo_path }}/{{ ansible_hostname }}
+export BORG_REPO=ssh://{{ borg_server_backup_user }}@{{ hostvars[groups['repo_server'][0]].ansible_host }}:{{hostvars[groups['repo_server'][0]].ansible_port}}{{ borg_server_repo_path }}/{{ ansible_hostname }}
 {% else %}
-export BORG_REPO=ssh://{{ repo.backup_user }}@{{ hostvars[groups['repo_server'][0]].inventory_hostname }}{{ repo.repo_path }}/{{ ansible_hostname }}
+export BORG_REPO=ssh://{{ borg_server_backup_user }}@{{ hostvars[groups['repo_server'][0]].ansible_host }}{{ borg_server_repo_path }}/{{ ansible_hostname }}
 {% endif %}
 
 # Setting this, so you won't be asked for your repository passphrase:
-export BORG_PASSPHRASE='{{ hostvars[inventory_hostname].repo_encryption_key }}'
+export BORG_PASSPHRASE='{{ borg_repokey }}'
 # Set ssh key for backup
-export BORG_RSH='ssh -i {{ client.ssh_key_location }}/backup_key'
+export BORG_RSH='ssh -i {{ borg_client_ssh_key_location }}/backup_key'
 # or this to ask an external program to supply the passphrase:
 # export BORG_PASSCOMMAND='pass show backup'
 
@@ -37,13 +37,12 @@ borg create                         \
     --exclude '/mnt'                \
     --exclude '/snap'               \
     --exclude '/sys'                \
-    --exclude '/home/*/.cache/*'    \
-    --exclude '/home/*/.steam/steam/steamapps/*'    \
-    --exclude '/var/cache/*'        \
-    --exclude '/var/tmp/*'          \
+{% for exclude in borg_excludes %}
+    --exclude '{{ exclude }}'         \
+{% endfor %}
                                     \
     ::'{now}'                       \
-    /                               \
+    {{ borg_root_path }}                               \
 
 backup_exit=$?
 
@@ -57,9 +56,9 @@ info "Pruning repository"
 borg prune                          \
     --list                          \
     --show-rc                       \
-    --keep-daily    7               \
-    --keep-weekly   4               \
-    --keep-monthly  6               \
+    --keep-daily    {{ borg_keep_daily }}               \
+    --keep-weekly   {{ borg_keep_weekly }}               \
+    --keep-monthly  {{ borg_keep_monthly }}               \
 
 prune_exit=$?
 

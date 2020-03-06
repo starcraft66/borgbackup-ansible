@@ -22,9 +22,9 @@
   expect:
     command: "ssh-keygen -t rsa -b 4096"
     # only creates the key if the file does not exist
-    creates: "{{ client.ssh_key_location }}/backup_key"
+    creates: "{{ borg_client_ssh_key_location }}/backup_key"
     responses:
-      "file": "{{ client.ssh_key_location }}/backup_key"
+      "file": "{{ borg_client_ssh_key_location }}/backup_key"
       "passphrase": ""
   when: inventory_hostname in groups['backup_client']
 
@@ -35,26 +35,27 @@
     owner: root
     group: root
   loop:
-    - "{{ client.ssh_key_location }}/backup_key"
-    - "{{ client.ssh_key_location }}/backup_key.pub"
+    - "{{ borg_client_ssh_key_location }}/backup_key"
+    - "{{ borg_client_ssh_key_location }}/backup_key.pub"
   when: inventory_hostname in groups['backup_client']
 
 - name: read public key
-  command: "cat {{ client.ssh_key_location }}/backup_key.pub"
+  command: "cat {{ borg_client_ssh_key_location }}/backup_key.pub"
   register: backup_pub_key
   when: inventory_hostname in groups['backup_client']
 
 - name: read repo server ecdsa ssh host key
-  command: "ssh-keyscan -Ht ecdsa -p {{ hostvars[groups['repo_server'][0]].ansible_port }} {{ hostvars[groups['repo_server'][0]].inventory_hostname }}"
+  command: "ssh-keyscan -Ht ecdsa -p {{ hostvars[groups['repo_server'][0]].ansible_port }} {{ hostvars[groups['repo_server'][0]].ansible_host }}"
   register: repo_host_key
   when: inventory_hostname in groups['repo_server']
   ignore_errors: true
 
-- name: add the repo server's ssh-rsa key to the client
+- name: add the repo server's ssh ecdsa host key to the client
   lineinfile:
     path: /root/.ssh/known_hosts
     create: yes
     line: "{{ hostvars[groups['repo_server'][0]].repo_host_key.stdout }}"
+  when: inventory_hostname in groups['backup_client']
 
 - name: Copy backup script
   template:
@@ -81,14 +82,14 @@
 
 - name: create backup user
   user:
-    name: "{{ repo.backup_user }}"
-    group: "{{ repo.backup_group }}"
+    name: "{{ borg_server_backup_user }}"
+    group: "{{ borg_server_backup_group }}"
     create_home: yes
   when: inventory_hostname in groups['repo_server']
 
 - name: add backup key to authorized keys
   authorized_key:
-    user: "{{ repo.backup_user }}"
+    user: "{{ borg_server_backup_user }}"
     key: "{{ hostvars[item].backup_pub_key.stdout }}"
     key_options: 'command="cd /var/backup/{{ hostvars[item].ansible_hostname }}; borg serve --restrict-to-path /var/backup/{{ hostvars[item].ansible_hostname }}",restrict'
   with_inventory_hostnames:
@@ -97,7 +98,7 @@
 
 - name: Check whether the backup repo for this host exists
   lineinfile:
-    name: "{{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}/README"
+    name: "{{ borg_server_repo_path }}/{{ hostvars[item].ansible_hostname }}/README"
     line: "This is a Borg Backup repository."
     state: present
   check_mode: yes
@@ -109,9 +110,9 @@
 
 - name: initialize borg repo
   expect:
-    command: "borg init --encryption=repokey {{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}"
+    command: "borg init --encryption=repokey {{ borg_server_repo_path }}/{{ hostvars[item].ansible_hostname }}"
     responses:
-      "passphrase": "{{ hostvars[item].repo_encryption_key }}"
+      "passphrase": "{{ hostvars[item].borg_repokey }}"
       "displayed": "N"
   with_inventory_hostnames:
     - backup_client
@@ -119,12 +120,12 @@
 
 - name: set repo permissions
   file:
-    path: "{{ repo.repo_path }}/{{ hostvars[item].ansible_hostname }}"
+    path: "{{ borg_server_repo_path }}/{{ hostvars[item].ansible_hostname }}"
     state: directory
     recurse: yes
     mode: 0700
-    owner: "{{ repo.backup_user }}"
-    group: "{{ repo.backup_group }}"
+    owner: "{{ borg_server_backup_user }}"
+    group: "{{ borg_server_backup_group }}"
   with_inventory_hostnames:
     - backup_client
   when: inventory_hostname in groups['repo_server']
