@@ -1,4 +1,5 @@
 galaxy_info:
+    role_name: borgbackup
     author: Tristan Gosselin-Hane
     description:  An Ansible role to configure clients for automated backups to a central server using the Borg backup program
     company: tdude.co
