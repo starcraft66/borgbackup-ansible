@@ -3,4 +3,4 @@
   hosts: all
   become: true
   roles:
-    - borg
+    - { role: starcraft66.borgbackup }

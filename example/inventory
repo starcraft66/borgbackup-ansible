@@ -1,0 +1,11 @@
+[repo_server]
+backup.domain.tld
+
+[backup_client]
+client1.domain.tld	borg_repokey=very_secret!!!
+client2.domain.tld	borg_repokey=very_secret!!!
+client3.domain.tld	borg_repokey=very_secret!!!
+
+[all:children]
+repo_server
+backup_client
