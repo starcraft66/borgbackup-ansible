@@ -120,7 +120,7 @@
   authorized_key:
     user: "{{ borg_server_backup_user }}"
     key: "{{ hostvars[item].backup_pub_key.stdout }}"
-    key_options: 'command="cd /var/backup/{{ hostvars[item].ansible_hostname }}; borg serve --restrict-to-path /var/backup/{{ hostvars[item].ansible_hostname }}",restrict'
+    key_options: 'command="cd {{ borg_server_repo_path }}/{{ hostvars[item].ansible_hostname }}; borg serve --restrict-to-path {{ borg_server_repo_path }}/{{ hostvars[item].ansible_hostname }}",restrict'
   with_inventory_hostnames:
     - backup_client
   when: inventory_hostname in groups['repo_server']
