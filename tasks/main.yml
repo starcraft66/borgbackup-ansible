@@ -11,12 +11,23 @@
   yum:
     name:
       - borgbackup
-      - python-pip
+      - borgmatic
+      - python3-pip
     state: latest
   when: ansible_os_family == "RedHat"
 
+- name: install borg backup via pkg
+  pkgng:
+    name:
+      - py37-borgbackup
+      - py37-borgmatic
+      - py37-pip
+    state: latest
+  when: ansible_os_family == "FreeBSD"
+
 - name: install pexpect
   pip:
+    executable: pip
     name: pexpect
 
 - name: Generate ssh keypair
