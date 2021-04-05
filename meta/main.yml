@@ -29,6 +29,17 @@ galaxy_info:
     # https://galaxy.ansible.com/api/v1/platforms/
     #
     platforms:
+      - name: FreeBSD
+        versions:
+          - "11.0"
+          - "11.1"
+          - "11.2"
+          - "12.0"
+          - "12.1"
+      - name: EL
+        versions:
+          - "7"
+          - "8"
       - name: Ubuntu
         versions:
           - xenial
