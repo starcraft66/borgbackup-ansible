@@ -15,3 +15,7 @@ borg_keep_weekly: "4"
 borg_keep_monthly: "6"
 
 borg_repokey: ""
+
+borg_pre_hook:
+
+borg_post_hook:

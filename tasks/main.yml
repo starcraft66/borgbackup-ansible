@@ -69,10 +69,22 @@
     line: "{{ hostvars[groups['repo_server'][0]].repo_host_key.stdout }}"
   when: inventory_hostname in groups['backup_client']
 
-- name: Copy backup script
+- name: create /etc/borgmatic.d folder
+  file:
+    path: "/etc/borgmatic.d"
+    state: directory
+    recurse: yes
+    mode: 0770
+    owner: "root"
+    group: "root"
+  with_inventory_hostnames:
+    - backup_client
+  when: inventory_hostname in groups['backup_client']
+
+- name: Copy borgmatic config
   template:
-    src: backup_helper.j2
-    dest: /usr/local/bin/backup_helper
+    src: system_backup.yaml.j2
+    dest: /etc/borgmatic.d/system_backup.yaml
     owner: root
     group: root
     mode: 0700
@@ -84,7 +96,7 @@
     user: root
     state: present
     name: System Backup
-    job: /usr/local/bin/backup_helper
+    job: "borgmatic"
     month: "*"
     weekday: "*"
     day: "*"
