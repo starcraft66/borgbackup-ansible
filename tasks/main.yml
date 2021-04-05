@@ -2,7 +2,8 @@
   apt:
     name:
       - borgbackup
-      - python-pip
+      - borgmatic
+      - python3-pip
     state: latest
   when: ansible_os_family == "Debian"
 
