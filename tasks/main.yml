@@ -96,7 +96,7 @@
     user: root
     state: present
     name: System Backup
-    job: "borgmatic"
+    job: "borgmatic --create --progress"
     month: "*"
     weekday: "*"
     day: "*"
