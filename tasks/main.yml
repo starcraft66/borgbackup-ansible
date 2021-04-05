@@ -104,6 +104,11 @@
     minute: 0
   when: inventory_hostname in groups['backup_client']
 
+- name: create backup group
+  group:
+    name: "{{ borg_server_backup_group }}"
+  when: inventory_hostname in groups['repo_server']
+
 - name: create backup user
   user:
     name: "{{ borg_server_backup_user }}"
