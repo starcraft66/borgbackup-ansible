@@ -192,11 +192,11 @@ retention:
 # prevent potential shell injection or privilege escalation.
 hooks:
     # List of one or more shell commands or scripts to execute before creating a backup.
-    before_backup: {{ borg_pre_hook | default("", true) | to_yaml }}
+    before_backup: {{ borg_pre_hook | default([], true) | to_yaml }}
     #    - echo "`date` - Starting a backup job."
 
     # List of one or more shell commands or scripts to execute after creating a backup.
-    after_backup: {{ borg_post_hook | default("", true) | to_yaml }}
+    after_backup: {{ borg_post_hook | default([], true) | to_yaml }}
     #    - echo "`date` - Backup created."
 
     # List of one or more shell commands or scripts to execute in case an exception has occurred.
